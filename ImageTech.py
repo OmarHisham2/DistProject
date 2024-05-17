@@ -1,5 +1,5 @@
 import cv2
-
+import numpy as np
 
 
 def edgeDetection(img): # Canny
@@ -17,6 +17,27 @@ def applyBlurring(img):
 
 def applyGaussianBlur(img):
     return cv2.GaussianBlur(img,(5,5),3)
+
+def applyErosion(img):
+    kernel = np.ones((5,5),np.uint8)
+    return cv2.erode(img)
+
+
+def applyDilation(img):
+    kernel = np.ones((5,5),np.uint8)
+    return cv2.dilate(img)
+
+def resizeImgToHalf(img):
+    return cv2.resize(img,fx=0.5,fy=0.5)
+
+def increaseBrightness(img):
+    brightness = 15
+    contrast = 1.5
+    image2 = cv2.addWeighted(img, contrast, np.zeros(img.shape, img.dtype), 0, brightness) 
+def removeNoise(img):
+    return cv2.medianBlur(img,11)
+
+
 
 
 def ApplyTechnique(img,method):
