@@ -2,12 +2,14 @@
 
 
 from pathlib import Path
+import time
 import uuid
 import boto3
 from tkinter import Tk, Canvas, Entry, Text, Button, PhotoImage,filedialog
 from tkinter import *
 import threading
 import tkinter as tk
+from tkinter import ttk
 from PIL import ImageTk, Image
 import customtkinter
 import queue
@@ -33,19 +35,47 @@ def openFile():
     return
 
 def uploadFile():
+    my_progressbar.step()
     chosenTechnique = selectedTechnique.get()
     uniqueID = str(uuid.uuid4())
     with open(uniqueID+'.txt',"w") as file:
         file.write(chosenTechnique)
+        my_progressbar.step()
+
     if(filepath is not None):
-        s3.meta.client.upload_file(filepath,'bucket441122',uniqueID+'.png')
+        my_progressbar.step()
         s3.meta.client.upload_file(uniqueID+'.txt','bucket441122',uniqueID+'.txt')
-        print('File uploaded successfully :) ')
+        print('Process Sent')
+        my_progressbar.step()
+
+        time.sleep(2)
+        s3.meta.client.upload_file(filepath,'bucket441122',uniqueID+'.png')
+        my_progressbar.step()
+
+        print('Image Sent')
+        resultNotFound = True
+        my_progressbar.step()
+        while(resultNotFound):
+            s3Client = boto3.client('s3')
+            response = s3Client.list_objects_v2(Bucket="bucket441122")
+            for content in response.get('Contents', []):
+                if (content['Key'] == "fixed/"+ uniqueID+'_fixed.png'):
+                    print('Fix Found!')
+                    s3Client.download_file("bucket441122","fixed/"+uniqueID+'_fixed.png',uniqueID+'.png')
+                    img = cv2.imread(uniqueID+".png")
+                    cv2.imshow('Result',img)
+                    cv2.waitKey()
+                    resultNotFound = False
+                    my_progressbar.step()
+                    break
+        my_progressbar.step()
     else:
+        tk.messagebox.showinfo(title='Error!', message='Select An Image to apply the technique!')
         print('image failed to upload!')
     return
 
-ProcessingOptions = ["Gaussian", "Edge Detection", "Convert To Gray"]
+ProcessingOptions = ["edgeDetection","colorInversion","convertToGray","applyBlurring","applyGaussianBlur",
+                     "removeNoise","increaseBrightness","resizeToHalf","applyDilation","applyErosion"]
 
 
 """The GUI"""
@@ -94,6 +124,9 @@ ApplyTech_Button = customtkinter.CTkButton(root,text='Apply Processing Technique
                                            corner_radius=10,command=uploadFile)
 ApplyTech_Button.pack(pady=10)
 
+my_progressbar =  customtkinter.CTkProgressBar(master=root,progress_color='green')
+my_progressbar.pack(pady=20)
+my_progressbar.set(0)
 
 root.mainloop()
 

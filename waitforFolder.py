@@ -1,12 +1,14 @@
 import os
 import time
 
+import cv2
+import ImageTech as imgtech
 # Function to get list of files in a directory
 def get_files(directory):
     return os.listdir(directory)
 
 # Directory to monitor
-directory_to_watch = 'D:/Downloads/DistProject/emad'
+directory_to_watch = 'D:/Dist Repo/DistProject'
 
 # Initial list of files
 initial_files = get_files(directory_to_watch)
@@ -22,9 +24,19 @@ while True:
     
     # If new files found, print them
     if new_files:
-        print("New file(s) added:")
         for file in new_files:
-            print(file)
+            id = file.split(".")[0] 
+            if file.endswith(".txt"):
+                with open(file,'r') as file:
+                    techToApply = file.read()
+                    file.close()
+            elif ( ( file.endswith(".jpg")) or (file.endswith(".png")) or ( file.endswith(".jpeg")) ):
+                if techToApply != None:
+                    img = cv2.imread(file,0)
+                    resultingImage = imgtech.ApplyTechnique(img,techToApply)
+                    cv2.imwrite(id+"_fixed.png",resultingImage)
+                    print('Image has been fixed')
+                    break
     
     # Update initial list for the next iteration
     initial_files = current_files
